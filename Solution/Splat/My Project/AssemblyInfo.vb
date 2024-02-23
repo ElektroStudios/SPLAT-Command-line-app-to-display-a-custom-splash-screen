@@ -10,17 +10,17 @@ Imports System.Runtime.InteropServices
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("Splat")> 
-<Assembly: AssemblyDescription("A SplashScreen Tool")>
+<Assembly: AssemblyTitle("Splat")>
+<Assembly: AssemblyDescription("Displays a custom splash screen")>
 <Assembly: AssemblyCompany("ElektroStudios")>
 <Assembly: AssemblyProduct("Splat")>
-<Assembly: AssemblyCopyright("Copyright © ElektroStudios 2013")>
+<Assembly: AssemblyCopyright("Copyright © ElektroStudios 2013-2024")>
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)> 
 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
-<Assembly: Guid("d075b1da-fb92-4ee5-9939-65cf1331a7b1")> 
+<Assembly: Guid("d075b1da-fb92-4ee5-9939-65cf1331a7b1")>
 
 ' Version information for an assembly consists of the following four values:
 '
@@ -33,7 +33,7 @@ Imports System.Runtime.InteropServices
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("1.1.0.0")> 
-<Assembly: AssemblyFileVersion("1.1.0.0")> 
+<Assembly: AssemblyVersion("1.2.0.0")>
+<Assembly: AssemblyFileVersion("1.2.0.0")>
 
 <Assembly: NeutralResourcesLanguageAttribute("en")> 

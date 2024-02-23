@@ -348,22 +348,22 @@
  |   |___|  _  |  |  _  |   _|
  |____   |   __|__|___._|____|
  |:  |   |__|    Splash Screen                 
- |::.. . |   By Elektro H@cker                       
+ |::.. . |   By ElektroStudios                       
  `-------'                
                               
 [+] Syntax:
 
-    Splat.exe [IMAGEFILE] [SWITCHES]
+    Splat.exe [IMAGE FILE] [SWITCHES]
 
 [+] Switches:
 
-    /Duration   | The Splash duration.    (Default: 5000)
-    /FXDuration | The effects duration.   (Default: 1500)
-    /FadeIN     | Enables FadeIN Effect.
-    /FadeOUT    | Enables FadeOUT Effect.
-    /Resize     | Resizes the image.
-    /Location   | Relocates the image.
-    /Clickable  | Enables click on image to close.
+    /Duration   | The splash screen duration.    (Default: 5000 ms)
+    /FXDuration | The visual effects duration.   (Default: 1500 ms)
+    /FadeIN     | Enable FadeIN effect.
+    /FadeOUT    | Enable FadeOUT effect.
+    /Resize     | Set a new size for the image.
+    /Location   | Set the position of the image on the current screen.
+    /Clickable  | Enables doing click on the image to close it.
     /OnTop      | Set the image on top of other windows.
     /?          | Shows this help.
 

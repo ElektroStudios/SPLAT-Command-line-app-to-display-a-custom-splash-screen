@@ -57,7 +57,7 @@ Partial Class Splat
         Me.MaximizeBox = False
         Me.MinimizeBox = False
         Me.Name = "Splat"
-        Me.Opacity = 0.0R
+        Me.Opacity = 0R
         Me.ShowIcon = False
         Me.ShowInTaskbar = False
         Me.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide
