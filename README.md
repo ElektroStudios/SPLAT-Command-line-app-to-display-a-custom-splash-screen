@@ -26,6 +26,8 @@ winforms
 
 The main idea behind **SPLAT** is to use it as part of any **WinRar** or similar self-extracting files, Batch-script files, a post-installation process of installer builders like Inno Setup, etc, to customize your packaging.
 
+This is an old project, with ugly source-code, and probably I will not rewrite it using good and modern habbits.
+
 ------------------
 
 ## 🖼️ Screenshots
