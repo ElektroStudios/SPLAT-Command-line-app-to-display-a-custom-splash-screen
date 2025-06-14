@@ -4,8 +4,16 @@
 
     ' Splat
     ' A SplashScreen Tool
-    ' Version 1.1
-    ' 18/05/2013
+    ' Version 1.8
+    ' 14/06/2025
+
+    ' [+] Changes v1.8:
+    ' - Added support for GIF images.
+    ' - Fixed "/Clickable" logic for PNG/ICO images.
+
+    ' [+] Changes v1.7:
+    ' - Updated to .NET Framework 4.8.
+    ' - Syntax help messages were improved a bit.
 
     ' [+] Changes v1.1:
     ' - Bug corrected: Image is not correctly centered after a resize operation.
@@ -20,19 +28,6 @@
     ' - Add FadeIN/FadeOUT compatibility por PNG/ICO images.
     ' - Add more FX effects.
 
-    ' [+] Cambios v1.1:
-    ' - Bug correjido: La imagen no se centra en la pantalla después de redimensionarla.
-    ' - Bug correjido: La transparencia de la aplicación afecta a la imagen mostrada (la imagen pierde ciertos colores).
-    ' - Añadida compatibilidad 100% con imágenes PNG/ICO transparentes y con sombras.
-    ' - Añadido los parámetros "/Ontop" y "/Clickable".
-    ' - Añadido un icono a la aplicación.
-    ' - Pequeñas optimizaciones de código para cargar más rápido.
-    ' - Erratas de texto correjidas en la sección de ayuda de la aplicación.
-
-    ' [+] Cosas por hacer:
-    ' Añadir compatibilidad con los efectos FadeIn/FadeOUT para imágenes PNG/ICO.
-    ' Añadir Más efectos especiales.
-
 #End Region
 
 #Region " Vars & Delegate "
@@ -42,7 +37,7 @@
     Dim img As Image
     Public imgbmp
     Dim ImageIsTransparent As Boolean = False
-    Public ImageIsClickable As Boolean = False
+    Public Shared ImageIsClickable As Boolean = False
     Public Enable_FadeIn As Boolean = False
     Public Enable_FadeOut As Boolean = False
     Dim Duration As Int64 = 5000
@@ -151,7 +146,7 @@
                     ImageIsTransparent = True
                     imgbmp = New Bitmap(img)
                 Else
-                    PictureBox_Img.BackgroundImage = img
+                    PictureBox_Img.Image = img
                     Me.Size = New Point(img.Size.Width, img.Size.Height)
                     Me.Location = New Point((Desktop_RES.Bounds.Width - Me.Width) / 2, (Desktop_RES.Bounds.Height - Me.Height) / 2)
                 End If
@@ -186,10 +181,15 @@
             ' Resize
             If Arguments(I).ToLower = "/resize" Then
                 Try
+                    Dim newWidth As Integer = Convert.ToInt32(Arguments.Item(I + 1).ToLower.Split("x").First)
+                    Dim newHeight As Integer = Convert.ToInt32(Arguments.Item(I + 1).ToLower.Split("x").Last)
+
                     If ImageIsTransparent Then
-                        imgbmp = Resize_Image(img, Arguments.Item(I + 1).ToLower.Split("x").First, Arguments.Item(I + 1).ToLower.Split("x").Last)
+                        imgbmp = Resize_Image(img, newWidth, newHeight)
                     Else
-                        Me.Size = New Point(Arguments.Item(I + 1).ToLower.Split("x").First, Arguments.Item(I + 1).ToLower.Split("x").Last)
+
+                        PictureBox_Img.SizeMode = PictureBoxSizeMode.Zoom
+                        Me.Size = New Point(newWidth, newHeight)
                         Me.Location = New Point((Desktop_RES.Bounds.Width - Me.Width) / 2, (Desktop_RES.Bounds.Height - Me.Height) / 2)
                     End If
                 Catch ' ex As Exception
@@ -388,6 +388,10 @@
 
         Console.WriteLine(Logo)
         Application.Exit()
+    End Sub
+
+    Private Sub PictureBox_Img_Click_1(sender As Object, e As EventArgs) Handles PictureBox_Img.Click
+
     End Sub
 
 #End Region

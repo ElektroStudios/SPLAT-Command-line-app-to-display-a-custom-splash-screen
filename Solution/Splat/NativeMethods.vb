@@ -4,6 +4,7 @@ Friend Class NativeMethods
     Public Const WS_EX_LAYERED As Integer = &H80000
     Public Const HTCAPTION As Integer = &H2
     Public Const WM_NCHITTEST As Integer = &H84
+    Public Const WM_LBUTTONDOWN As Integer = &H201
     Public Const ULW_ALPHA As Integer = &H2
     Public Const AC_SRC_OVER As Byte = &H0
     Public Const AC_SRC_ALPHA As Byte = &H1

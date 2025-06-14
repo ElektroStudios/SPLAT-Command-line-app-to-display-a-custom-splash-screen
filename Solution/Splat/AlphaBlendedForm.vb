@@ -20,8 +20,8 @@ Public Class AlphaBlendedForm
         Me.ShowInTaskbar = False
         Me.Size = bitmap.Size
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Show()
         Me.SelectBitmap(bitmap)
+        Me.Show()
         Me.MaximizeBox = False
         Me.MinimizeBox = False
 
@@ -107,9 +107,15 @@ Public Class AlphaBlendedForm
                 m.Result = New IntPtr(HTCAPTION)
             End If
 
-        Else
-            MyBase.WndProc(m)
+        ElseIf m.Msg = WM_LBUTTONDOWN Then
+            If Splat.ImageIsClickable Then
+                Me.Close()
+                Return
+            End If
         End If
+
+        MyBase.WndProc(m)
+
     End Sub
 
 End Class
