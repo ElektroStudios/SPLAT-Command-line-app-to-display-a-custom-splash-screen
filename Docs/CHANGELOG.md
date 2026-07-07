@@ -1,4 +1,4 @@
-# SPLAT Change Log 📋
+﻿# SPLAT Change Log 📋
 
 ## v1.8 *(current)* 🆕
 #### 🌟 Improvements:
