@@ -71,6 +71,7 @@ When automating software deployments or heavy file extractions, the execution pr
 ##### ⚡ The Real Question
 ###### How many times have you launched a script or installer and been left staring at a blank screen, uncertain if the process started or if the system simply froze?.
 
+
 > [!NOTE]
 > This is a legacy project. The source-code relies on older development standards and will not be refactored, but the utility remains fully functional and reliable for its intended purpose.
 
