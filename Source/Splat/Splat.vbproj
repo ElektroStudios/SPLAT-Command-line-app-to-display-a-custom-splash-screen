@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{113345B8-E8DF-419B-8725-1A061544689A}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <StartupObject>Splat.Splat</StartupObject>
+    <StartupObject>Splat.Program</StartupObject>
     <RootNamespace>Splat</RootNamespace>
     <AssemblyName>Splat</AssemblyName>
     <FileAlignment>512</FileAlignment>
@@ -80,7 +80,21 @@
     <Compile Include="AlphaBlendedForm.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Core\CommandLineArgumentException.vb" />
+    <Compile Include="Core\CommandLineParser.vb" />
+    <Compile Include="Core\FadeScheduler.vb" />
+    <Compile Include="Core\HelpText.vb" />
+    <Compile Include="Core\ImageFileHelper.vb" />
+    <Compile Include="Core\ImageResizer.vb" />
+    <Compile Include="Core\ScreenGeometry.vb" />
+    <Compile Include="Core\SplashImageException.vb" />
+    <Compile Include="Core\SplashRequest.vb" />
+    <Compile Include="Core\SplatExitCode.vb" />
+    <Compile Include="Core\SplatLauncher.vb" />
+    <Compile Include="Core\SplatOptions.vb" />
+    <Compile Include="Core\TransparencyKeyFinder.vb" />
     <Compile Include="NativeMethods.vb" />
+    <Compile Include="Program.vb" />
     <Compile Include="Splat.vb">
       <SubType>Form</SubType>
     </Compile>

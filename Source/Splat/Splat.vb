@@ -1,11 +1,54 @@
-﻿Public Class Splat
+﻿#Region " Option Statements "
+
+Option Strict On
+Option Explicit On
+Option Infer Off
+
+#End Region
+
+#Region " Imports "
+
+Imports System.Collections.Generic
+Imports System.Diagnostics
+Imports System.Drawing
+Imports System.Threading
+Imports System.Windows.Forms
+
+#End Region
+
+#Region " Splat "
+
+''' <summary>
+''' The main window of the application, which displays the splash screen.
+''' </summary>
+Public Class Splat
 
 #Region " Info "
 
     ' Splat
     ' A SplashScreen Tool
-    ' Version 1.8
-    ' 14/06/2025
+    ' Version 1.9
+    ' 09/11/2026
+
+    ' [+] Changes v1.9:
+    ' - Added a unit test project (Splat.Tests).
+    ' - Command-line parsing, image preparation and the rest of non-UI logic was moved to testable modules.
+    ' - When the parent console cannot be accessed (AttachConsole fails with "Access is denied"), the help and error messages are shown in a message box.
+    ' - Added exit codes (0 = Success, 1 = Invalid arguments, 2 = File not found, 3 = Invalid image).
+    ' - Bug corrected: "/?" (and the rest of help switches) did not display the help when used as the first argument.
+    ' - Bug corrected: Help and argument errors were followed by an error message box ("Object reference not set...").
+    ' - Bug corrected: A switch without value at the end of the command-line (e.g. "/Duration") crashed the application.
+    ' - Bug corrected: An invalid or corrupt image file crashed the application.
+    ' - Bug corrected: "/Location 0,Y" was ignored for PNG/ICO images (the image was centered instead).
+    ' - Bug corrected: "/Location" was ignored for JPG/BMP/GIF images when "/Resize" was specified after it.
+    ' - Bug corrected: "/OnTop" had no effect for PNG/ICO images.
+    ' - Bug corrected: "/Clickable" did not close PNG/ICO images (the click started a window drag instead).
+    ' - Bug corrected: Fade effects consumed 100% of a CPU core (busy-wait loop).
+    ' - Bug corrected: If "/FXDuration" was greater than "/Duration", the fade-out effect was interrupted.
+    ' - Unknown arguments and malformed "/Resize" and "/Location" values are now reported as errors.
+    ' - "/FadeOUT" no longer adds a pointless delay for PNG/ICO images (fade effects are not supported for them).
+    ' - Improved the image resize quality for PNG/ICO images, and removed the stretching artifact at the image edges.
+    ' - The transparency key color is now computed in a single pass over the image pixels (much faster).
 
     ' [+] Changes v1.8:
     ' - Added support for GIF images.
@@ -17,7 +60,7 @@
 
     ' [+] Changes v1.1:
     ' - Bug corrected: Image is not correctly centered after a resize operation.
-    ' - Bug corrected: Form transparency affect PNG/ICO images. (Images looses pixel colors) 
+    ' - Bug corrected: Form transparency affect PNG/ICO images. (Images looses pixel colors)
     ' - Added full compatibility with ICO/PNG transparents and with shadows.
     ' - Added "/Ontop" and "/Clickable" switches.
     ' - Added a icon to the application.
@@ -30,56 +73,62 @@
 
 #End Region
 
-#Region " Vars & Delegate "
+#Region " Fields "
 
-    Dim Arguments As List(Of String) = Set_CommandLine_Arguments()
+    ''' <summary>
+    ''' The splash screen request.
+    ''' </summary>
+    Private ReadOnly request As SplashRequest
 
-    Dim img As Image
-    Public imgbmp
-    Dim ImageIsTransparent As Boolean = False
-    Public Shared ImageIsClickable As Boolean = False
-    Public Enable_FadeIn As Boolean = False
-    Public Enable_FadeOut As Boolean = False
-    Dim Duration As Int64 = 5000
-    Dim Effects_Duration As Int64 = 1500
-    Dim Desktop_RES As System.Windows.Forms.Screen = System.Windows.Forms.Screen.PrimaryScreen
-
-    Delegate Sub Fade_Delegate(ByVal [Form] As Form, ByVal [Action] As FadeEffect, ByVal [TimeMs] As Double, ByVal [ToOpacity] As Double)
-
-    Declare Function AttachConsole Lib "kernel32.dll" (ByVal dwProcessId As Int32) As Boolean
-    ' Declare Function FreeConsole Lib "kernel32.dll" () As Boolean
+    ''' <summary>
+    ''' The layered window used to display PNG/ICO images with per-pixel alpha blending.
+    ''' </summary>
+    Private alphaBlendedForm As AlphaBlendedForm
 
 #End Region
 
-#Region " Debug CommandLine Arguments "
+#Region " Constructors "
 
-    Public Function Set_CommandLine_Arguments() As List(Of String)
-#If DEBUG Then
-        ' Debug Commandline arguments for testing:
-        If Debugger.IsAttached Then
-            Dim DebugArguments = "C:\Users\Administrador\Desktop\images.jpg /fadein /duration 5000"
-            Return DebugArguments.Split(" ").ToList
-        Else
-            ' Nomal Commandline arguments
-            Return My.Application.CommandLineArgs.ToList
+    ''' <summary>
+    ''' Initializes a new instance of the <see cref="Splat"/> class.
+    ''' </summary>
+    '''
+    ''' <param name="request">
+    ''' The splash screen request.
+    ''' </param>
+    '''
+    ''' <exception cref="ArgumentNullException">
+    ''' Thrown when <paramref name="request"/> is <see langword="Nothing"/>.
+    ''' </exception>
+    Friend Sub New(request As SplashRequest)
+
+        If request Is Nothing Then
+            Throw New ArgumentNullException(NameOf(request))
         End If
-#Else
-        ' Nomal Commandline arguments
-        Return My.Application.CommandLineArgs.ToList
-#End If
-    End Function
+
+        Me.InitializeComponent()
+        Me.request = request
+
+    End Sub
 
 #End Region
 
-#Region " Form "
+#Region " Event Handlers "
 
-    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+    ''' <summary>
+    ''' Handles the <see cref="Form.Load"/> event of this form.
+    ''' </summary>
+    '''
+    ''' <param name="sender">
+    ''' The source of the event.
+    ''' </param>
+    '''
+    ''' <param name="e">
+    ''' The <see cref="EventArgs"/> instance containing the event data.
+    ''' </param>
+    Private Sub Splat_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
-        Try
-            AttachConsole(-1) ' Attach the console mode
-        Catch 'ex As Exception
-            ' MsgBox(ex.Message)
-        End Try
+        Dim options As SplatOptions = Me.request.Options
 
         Me.Opacity = 1
         Me.SetStyle(ControlStyles.ResizeRedraw, True)
@@ -87,313 +136,165 @@
         Me.SetStyle(ControlStyles.Opaque, True)
         Me.SetStyle(ControlStyles.OptimizedDoubleBuffer, True)
         Me.SetStyle(ControlStyles.UserPaint, True)
-        Me.Size = New Point(0, 0)
+        Me.Size = New Size(0, 0)
+        Me.TopMost = options.OnTop
 
-        Pass_Arguments()
+        Dim primaryScreenBounds As Rectangle = Screen.PrimaryScreen.Bounds
 
-        If Not ImageIsTransparent Then
-            For Each col In System.[Enum].GetValues(GetType(KnownColor))
-                If Not Image_Has_Color(img, Color.FromKnownColor(col)) Then
-                    If Not Color.FromKnownColor(col).ToString.ToLower.Contains("transparent") Then
-                        Me.BackColor = Color.FromKnownColor(col)
-                        Me.TransparencyKey = Color.FromKnownColor(col)
-                        Exit For
-                    End If
-                End If
-            Next
-            If Enable_FadeIn Then
+        If Me.request.UsesPerPixelAlpha Then
+            ' PNG/ICO: the image is displayed in a separate layered window; this form remains invisible (0x0 size).
+            Dim alphaBitmap As Bitmap = DirectCast(Me.request.Image, Bitmap)
+            Dim imageLocation As Point = If(options.Location.HasValue,
+                                       options.Location.Value,
+                                       ScreenGeometry.GetCenteredLocation(primaryScreenBounds, alphaBitmap.Size))
+
+            Me.alphaBlendedForm = New AlphaBlendedForm(alphaBitmap, imageLocation, options.OnTop, options.Clickable)
+            Me.alphaBlendedForm.Show()
+
+        Else
+            Me.BackColor = Me.request.TransparencyKey
+            Me.TransparencyKey = Me.request.TransparencyKey
+            Me.PictureBox_Img.Image = Me.request.Image
+
+            Dim windowSize As Size = Me.request.Image.Size
+            If options.Size.HasValue Then
+                windowSize = options.Size.Value
+                Me.PictureBox_Img.SizeMode = PictureBoxSizeMode.Zoom
+            End If
+            Me.Size = windowSize
+            Me.Location = If(options.Location.HasValue,
+                             options.Location.Value,
+                             ScreenGeometry.GetCenteredLocation(primaryScreenBounds, windowSize))
+
+            If options.Clickable Then
+                Me.PictureBox_Img.Cursor = Cursors.Hand
+                AddHandler Me.PictureBox_Img.Click, AddressOf Me.PictureBox_Img_Click
+            End If
+
+            If options.FadeIn Then
                 Me.Opacity = 0
                 Me.Show()
-                Fade(Me, FadeEffect.FadeIN, Effects_Duration, 1)
-            Else
-                Me.Opacity = 1
+                Me.Fade(toOpacity:=1.0R)
             End If
-        Else
-            Dim f As New AlphaBlendedForm(imgbmp)
-            'f.Opacity = 0
-            f.Show()
-            'Fade(f, FadeEffect.FadeIN, Effects_Duration, 1)
         End If
 
-        Timer_CloseForm.Enabled = True
+        If Not Me.IsDisposed Then
+            Me.Timer_CloseForm.Interval = options.DurationMilliseconds
+            Me.Timer_CloseForm.Start()
+        End If
 
     End Sub
 
-    ' PictureBox Click Event
+    ''' <summary>
+    ''' Handles the <see cref="Control.Click"/> event of the <see cref="Splat.PictureBox_Img"/> control.
+    ''' <para></para>
+    ''' This handler is only attached when the "/Clickable" switch is specified.
+    ''' </summary>
+    '''
+    ''' <param name="sender">
+    ''' The source of the event.
+    ''' </param>
+    '''
+    ''' <param name="e">
+    ''' The <see cref="EventArgs"/> instance containing the event data.
+    ''' </param>
     Private Sub PictureBox_Img_Click(sender As Object, e As EventArgs)
+
         Application.Exit()
+
     End Sub
 
-    ' Timer to close the application
-    Private Sub Timer_Close_Tick(sender As Object, e As EventArgs) Handles Timer_CloseForm.Tick
-        If Enable_FadeOut Then Fade(Me, FadeEffect.FadeOut, Effects_Duration, 0)
-        End ' End because if form loading event don't finished to load it throws an exception.
-    End Sub
+    ''' <summary>
+    ''' Handles the <see cref="System.Windows.Forms.Timer.Tick"/> event of the <see cref="Splat.Timer_CloseForm"/> timer.
+    ''' <para></para>
+    ''' Closes the splash screen when its duration has elapsed.
+    ''' </summary>
+    '''
+    ''' <param name="sender">
+    ''' The source of the event.
+    ''' </param>
+    '''
+    ''' <param name="e">
+    ''' The <see cref="EventArgs"/> instance containing the event data.
+    ''' </param>
+    Private Sub Timer_CloseForm_Tick(sender As Object, e As EventArgs) Handles Timer_CloseForm.Tick
 
+        ' Stop the timer first, otherwise it would tick again (re-entrantly) during the fade-out effect.
+        Me.Timer_CloseForm.Stop()
+
+        If Me.request.Options.FadeOut AndAlso Not Me.request.UsesPerPixelAlpha Then
+            Me.Fade(toOpacity:=0.0R)
+        End If
+
+        Application.Exit()
+
+    End Sub
 
 #End Region
 
-#Region " Arguments "
+#Region " Private Methods "
 
-    Private Sub Pass_Arguments()
+    ''' <summary>
+    ''' Gradually changes the opacity of this form, from its current opacity to the specified opacity,
+    ''' during the effects duration specified in the options.
+    ''' <para></para>
+    ''' Window messages are processed during the effect, so the form remains responsive.
+    ''' </summary>
+    '''
+    ''' <param name="toOpacity">
+    ''' The target opacity, in the range 0.0 to 1.0.
+    ''' </param>
+    Private Sub Fade(toOpacity As Double)
 
-        ' Image file (First argument)
-        If Not Arguments.Count = 0 Then
-            If IO.File.Exists(Arguments.Item(0)) Then
-                img = Image.FromFile(Arguments.Item(0))
+        Dim schedule As IReadOnlyList(Of FadeStep) =
+            FadeScheduler.CreateSchedule(Me.Opacity, toOpacity,
+                                         Me.request.Options.EffectsDurationMilliseconds,
+                                         FadeScheduler.DefaultStepCount)
 
-                If Arguments.Item(0).ToLower.EndsWith(".png") Or Arguments.Item(0).ToLower.EndsWith(".ico") Then
-                    ImageIsTransparent = True
-                    imgbmp = New Bitmap(img)
-                Else
-                    PictureBox_Img.Image = img
-                    Me.Size = New Point(img.Size.Width, img.Size.Height)
-                    Me.Location = New Point((Desktop_RES.Bounds.Width - Me.Width) / 2, (Desktop_RES.Bounds.Height - Me.Height) / 2)
+        Dim elapsed As Stopwatch = Stopwatch.StartNew()
+        For Each currentStep As FadeStep In schedule
+
+            While elapsed.ElapsedMilliseconds < currentStep.DueTimeMilliseconds
+                Application.DoEvents()
+                If Me.IsDisposed Then
+                    Return ' The form was closed (e.g. clicked) during the effect.
                 End If
+                Thread.Sleep(1)
+            End While
 
-            Else
-                Console.WriteLine("File " & ControlChars.Quote & Arguments.Item(0).ToString & ControlChars.Quote & " don't exist.")
-                Application.Exit()
+            If Me.IsDisposed Then
+                Return
             End If
-        Else
-            Help()
-        End If
-
-        ' Rest of arguments
-        For I As Integer = 1 To Arguments.Count - 1
-            Application.DoEvents()
-
-            ' Help
-            If Arguments.Item(I) = "/?" Or Arguments.Item(I).ToLower = "-h" Or Arguments.Item(I).ToLower = "-help" Then
-                Help()
-            End If
-
-            ' Duration
-            If Arguments.Item(I).ToLower = "/duration" Then
-                Try
-                    Timer_CloseForm.Interval = Arguments.Item(I + 1)
-                Catch ' ex As Exception
-                    ' MsgBox(ex.Message)
-                    Catch_Argument_Error("/Duration", Arguments.Item(I + 1).ToString)
-                End Try
-            End If
-
-            ' Resize
-            If Arguments(I).ToLower = "/resize" Then
-                Try
-                    Dim newWidth As Integer = Convert.ToInt32(Arguments.Item(I + 1).ToLower.Split("x").First)
-                    Dim newHeight As Integer = Convert.ToInt32(Arguments.Item(I + 1).ToLower.Split("x").Last)
-
-                    If ImageIsTransparent Then
-                        imgbmp = Resize_Image(img, newWidth, newHeight)
-                    Else
-
-                        PictureBox_Img.SizeMode = PictureBoxSizeMode.Zoom
-                        Me.Size = New Point(newWidth, newHeight)
-                        Me.Location = New Point((Desktop_RES.Bounds.Width - Me.Width) / 2, (Desktop_RES.Bounds.Height - Me.Height) / 2)
-                    End If
-                Catch ' ex As Exception
-                    ' MsgBox(ex.Message)
-                    Catch_Argument_Error("/Resize", Arguments.Item(I + 1).ToString)
-                End Try
-            End If
-
-            ' Location
-            If Arguments(I).ToLower = "/location" Then
-                Try
-                    If ImageIsTransparent Then
-                        AlphaBlendedForm.PNG_Location_X = Arguments.Item(I + 1).ToLower.Split(",").First
-                        AlphaBlendedForm.PNG_Location_Y = Arguments.Item(I + 1).ToLower.Split(",").Last
-                    Else
-                        Me.Location = New Point(Arguments.Item(I + 1).Split(",").First, Arguments.Item(I + 1).Split(",").Last)
-                    End If
-                Catch ' ex As Exception
-                    ' MsgBox(ex.Message)
-                    Catch_Argument_Error("/Location", Arguments.Item(I + 1).ToString)
-                End Try
-            End If
-
-            ' Fade IN
-            If Arguments(I).ToLower = "/fadein" Then
-                Enable_FadeIn = True
-            End If
-
-            ' Fade Out
-            If Arguments(I).ToLower = "/fadeout" Then
-                Enable_FadeOut = True
-            End If
-
-            ' Fade IN/Out Duration
-            If Arguments.Item(I).ToLower = "/fxduration" Then
-                Try
-                    Effects_Duration = Arguments.Item(I + 1)
-                Catch ' ex As Exception
-                    ' MsgBox(ex.Message)
-                    Catch_Argument_Error("/FXDuration", Arguments.Item(I + 1).ToString)
-                End Try
-            End If
-
-            ' Clickable
-            If Arguments(I).ToLower = "/clickable" Then
-                ImageIsClickable = True
-                PictureBox_Img.Cursor = Cursors.Hand
-                AddHandler PictureBox_Img.Click, AddressOf PictureBox_Img_Click
-            End If
-
-            ' OnTop
-            If Arguments(I).ToLower = "/ontop" Then
-                Me.TopMost = True
-            End If
+            Me.Opacity = currentStep.Opacity
 
         Next
 
     End Sub
 
-    Private Sub Catch_Argument_Error(ByVal Switch As String, ByVal Value As String)
-        Console.WriteLine("Wrong value specified for " & Switch & " " & ControlChars.Quote & Value & ControlChars.Quote)
-        Application.Exit()
-    End Sub
-
 #End Region
 
-#Region " Image Has Color? "
+#Region " Overridden Members "
 
-    Private Function Image_Has_Color(ByVal image As Image, ByVal color As Color) As Boolean
+    ''' <summary>
+    ''' Raises the <see cref="Form.FormClosed"/> event.
+    ''' <para></para>
+    ''' Disposes the layered window used to display PNG/ICO images, if any.
+    ''' </summary>
+    '''
+    ''' <param name="e">
+    ''' A <see cref="FormClosedEventArgs"/> that contains the event data.
+    ''' </param>
+    Protected Overrides Sub OnFormClosed(e As FormClosedEventArgs)
 
-        Try
-            Using Bitmap_Image = New Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb)
-
-                Graphics.FromImage(Bitmap_Image).DrawImage(image, 0, 0)
-
-                Dim Bitmap_Data = Bitmap_Image.LockBits(New Rectangle(0, 0, Bitmap_Image.Width, Bitmap_Image.Height), System.Drawing.Imaging.ImageLockMode.[ReadOnly], Bitmap_Image.PixelFormat)
-                Dim Bitmap_Pointer As IntPtr = Bitmap_Data.Scan0
-
-                Dim Pixel_Color As Int32
-                Dim Result As Boolean = False
-
-                For i = 0 To Bitmap_Data.Height * Bitmap_Data.Width - 1
-
-                    Pixel_Color = System.Runtime.InteropServices.Marshal.ReadInt32(Bitmap_Pointer, i * 4)
-
-                    If (Pixel_Color And &HFF000000) <> 0 AndAlso (Pixel_Color And &HFFFFFF) = (color.ToArgb() And &HFFFFFF) Then
-                        Result = True
-                        Exit For
-                    End If
-
-                Next
-
-                Bitmap_Image.UnlockBits(Bitmap_Data)
-                Return Result
-
-            End Using
-
-        Catch ex As Exception
-            MsgBox(ex.Message)
-            Return Nothing
-        End Try
-
-    End Function
-
-#End Region
-
-#Region " Resize Image "
-
-    Private Function Resize_Image(ByVal img As Image, ByVal Width As Int32, ByVal Height As Int32) As Bitmap
-        Dim Bitmap_Source As New Bitmap(img)
-        Dim Bitmap_Dest As New Bitmap(CInt(Width), CInt(Height), Imaging.PixelFormat.Format32bppArgb)
-        Dim Graphic As Graphics = Graphics.FromImage(Bitmap_Dest)
-        Graphic.DrawImage(Bitmap_Source, 0, 0, Bitmap_Dest.Width + 1, Bitmap_Dest.Height + 1)
-        Return Bitmap_Dest
-    End Function
-
-#End Region
-
-#Region " Fade IN/OUT "
-
-    Public Enum FadeEffect
-        FadeIN
-        FadeOut
-    End Enum
-
-    Public Sub Fade(ByVal whd As Form, ByVal Action As String, ByVal ms As Double, ByVal ToOpacity As Double)
-        ms = ms / 100
-        Dim etime As DateTime
-        If whd.InvokeRequired Then
-            Dim d As New Fade_Delegate(AddressOf Fade)
-            whd.Invoke(d, New Object() {whd, ms, ToOpacity})
-        Else
-            Try
-                While 1 = 1
-                    If Action = FadeEffect.FadeIN Then whd.Opacity += 0.01
-                    If Action = FadeEffect.FadeOut Then whd.Opacity -= 0.01
-                    If whd.Opacity.ToString.Substring(0, 3) = ToOpacity.ToString Then Exit While
-                    etime = Now.AddMilliseconds(ms)
-                    While Now < etime
-                        System.Windows.Forms.Application.DoEvents()
-                    End While
-                End While
-            Catch ex As Exception
-            End Try
+        If Me.alphaBlendedForm IsNot Nothing AndAlso Not Me.alphaBlendedForm.IsDisposed Then
+            Me.alphaBlendedForm.Dispose()
         End If
-    End Sub
-
-#End Region
-
-#Region " Help "
-
-    Private Sub Help()
-        Dim Logo As String = <a><![CDATA[
-  _______       __       __   
- |   _   .-----|  .---.-|  |_ 
- |   |___|  _  |  |  _  |   _|
- |____   |   __|__|___._|____|
- |:  |   |__|    Splash Screen                 
- |::.. . |   By ElektroStudios                       
- `-------'                
-                              
-[+] Syntax:
-
-    Splat.exe [IMAGE FILE] [SWITCHES]
-
-[+] Switches:
-
-    /Duration   | The splash screen duration.    (Default: 5000 ms)
-    /FXDuration | The visual effects duration.   (Default: 1500 ms)
-    /FadeIN     | Enable FadeIN effect.
-    /FadeOUT    | Enable FadeOUT effect.
-    /Resize     | Set a new size for the image.
-    /Location   | Set the position of the image on the current screen.
-    /Clickable  | Enables doing click on the image to close it.
-    /OnTop      | Set the image on top of other windows.
-    /?          | Shows this help.
-
-[+] Switches values Syntax:
-
-    /Duration   (ms)
-    /FXDuration (ms)
-    /Resize     (widthXheight)
-    /Location   (X,Y)
-
-[+] Examples:
-
-    Splat.exe "C:\Image.png"
-    (Shows a image at the center of the screen.)
-   
-    Splat.exe "C:\Image.png" /Resize 200x400 /Location 100,300
-    (Shows a resized image to 200x400 px at 100,300 coordinates.)
-   
-    Splat.exe "C:\Image.png" /Duration 6000 /FadeIN /FadeOUT /FXDuration 2000
-    (Shows a image with fade effects for 6000 ms plus 2000 ms for each effect)
-]]></a>.Value
-
-        Console.WriteLine(Logo)
-        Application.Exit()
-    End Sub
-
-    Private Sub PictureBox_Img_Click_1(sender As Object, e As EventArgs) Handles PictureBox_Img.Click
+        MyBase.OnFormClosed(e)
 
     End Sub
 
 #End Region
 
 End Class
+
+#End Region

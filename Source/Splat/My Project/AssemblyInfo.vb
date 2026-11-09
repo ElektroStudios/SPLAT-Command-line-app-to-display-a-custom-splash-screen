@@ -2,6 +2,7 @@
 
 Imports System
 Imports System.Reflection
+Imports System.Runtime.CompilerServices
 Imports System.Runtime.InteropServices
 
 ' General Information about an assembly is controlled through the following 
@@ -14,7 +15,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyDescription("Displays a custom splash screen")>
 <Assembly: AssemblyCompany("ElektroStudios")>
 <Assembly: AssemblyProduct("Splat")>
-<Assembly: AssemblyCopyright("Copyright © ElektroStudios 2013-2025")>
+<Assembly: AssemblyCopyright("Copyright © ElektroStudios 2013-2026")>
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)> 
@@ -33,7 +34,9 @@ Imports System.Runtime.InteropServices
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("1.8.0.0")>
-<Assembly: AssemblyFileVersion("1.8.0.0")>
+<Assembly: AssemblyVersion("1.9.0.0")>
+<Assembly: AssemblyFileVersion("1.9.0.0")>
 
-<Assembly: NeutralResourcesLanguageAttribute("en")> 
+<Assembly: NeutralResourcesLanguageAttribute("en")>
+
+<Assembly: InternalsVisibleTo("Splat.Tests")> 

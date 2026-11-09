@@ -107,13 +107,22 @@ Splat.exe <IMAGE FILEPATH> [SWITCHES]
 | :--- | :--- | :--- | :--- |
 | **/Duration** | `(ms)` | The splash screen duration. | 5000 ms |
 | **/FXDuration** | `(ms)` | The visual effects duration. | 1500 ms |
-| **/FadeIN** | *None* | Enable FadeIN effect. | Disabled |
-| **/FadeOUT** | *None* | Enable FadeOUT effect. | Disabled |
+| **/FadeIN** | *None* | Enable FadeIN effect (not supported for PNG/ICO images). | Disabled |
+| **/FadeOUT** | *None* | Enable FadeOUT effect (not supported for PNG/ICO images). | Disabled |
 | **/Resize** | `(widthXheight)` | Set a new size for the image (e.g., 400x400). | Original size |
 | **/Location** | `(X,Y)` | Set the position of the image on the current screen (e.g., 100,300). | Center |
 | **/Clickable** | *None* | Enables doing click on the image to close it. | Disabled |
 | **/OnTop** | *None* | Set the image on top of other windows. | Disabled |
 | **/?** | *None* | Shows this help. | — |
+
+#### Exit Codes
+
+| Code | Description |
+| :---: | :--- |
+| **0** | Success. |
+| **1** | Missing, unknown or invalid argument. |
+| **2** | The image file does not exist. |
+| **3** | The image file is not a valid or supported image. |
 
 ---
 
@@ -123,7 +132,7 @@ Splat.exe <IMAGE FILEPATH> [SWITCHES]
 | :--- | :--- |
 | `Splat.exe "C:\Image.png"` | Shows an image at the center of the screen for 5000 ms. |
 | `Splat.exe "C:\Image.png" /Resize 400x400 /Location 100,300` | Shows a resized image (400x400 px) at 100,300 coordinates for 5000 ms. |
-| `Splat.exe "C:\Image.png" /Duration 6000 /FadeIN /FadeOUT /FXDuration 2000` | Shows an image at the center of the screen with fade effects for 6000 ms, plus 2000 ms for each fade effect (Total: 10000 ms). |
+| `Splat.exe "C:\Image.jpg" /Duration 6000 /FadeIN /FadeOUT /FXDuration 2000` | Shows an image at the center of the screen with fade effects for 6000 ms, plus 2000 ms for each fade effect (Total: 10000 ms). |
 
 ## 🔄 Change Log
 
